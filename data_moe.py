@@ -27,15 +27,21 @@ def maapd_extract(text):
     return (match_ma.group(1),) if match_ma else text
     
 data = []
+after_marker = False
+orig_marker_line = '<!-- embed-end:originaloth -->'
 with open(INPUT_PATH+'プロセカ曲.txt', 'r', encoding='utf-8') as file:
     for line in file:
+        if line.strip() == orig_marker_line:
+            after_marker = True
         if len(line)>=5 and line.startswith('|'):
             datai = line.lstrip('|').rstrip('\n').split('||')
             if len(datai)==17:
+                orig_tag = 0 if after_marker else 1
+                datai.append(orig_tag)
                 data.append(datai)
             else: print(datai)
 columns = ['id', 'date', 'title', 'vocal', 'bpm', 'duration', 'ez', 'nr', 'hd', 'ex',
-          'maapd', 'ezn', 'nrn', 'hdn', 'exn', 'maapdn', 'info']
+          'maapd', 'ezn', 'nrn', 'hdn', 'exn', 'maapdn', 'info', 'orig_tag']
 df = pd.DataFrame(data, columns=columns)
 df.title = df.title.apply(link_extract)
 df.vocal = df.vocal.apply(link_extract)
@@ -71,13 +77,14 @@ def band_genre(text):
     return ''
 df['band'] = df.title.apply(band_genre)
 df['genre'] = df.title.str.extract(r'^(.*?)\d{0,1}#', expand=True)
-df.loc[df.id.isin(['76', '77', '141', '235', '336', '366', '489', '502', '579', '585', '624', '648'] + \
+df.loc[df.id.isin(['76', '77', '141', '235', '336', '366', '489', '502', '579', '585', '624', '648',
+                   '726', '709'] + \
                   list(map(str, range(685, 690)))), 'band'] = 'v'
 df.loc[df.id.isin(('302', '232', '233')), 'band'] = 'ln'
 df.loc[df.id.isin(('400',)), 'band'] = 'mmj'
-df.loc[df.id.isin(('230', '536', '555')), 'band'] = 'vbs'
+df.loc[df.id.isin(('230', '536', '555', '703')), 'band'] = 'vbs'
 df.loc[df.id.isin(('234', '623')), 'band'] = 'ws'
-df.loc[df.id.isin(('231', '501')), 'band'] = '25'
+df.loc[df.id.isin(('231', '501', '723')), 'band'] = '25'
 
 def title_extract(text):
     match = re.search(r'\|(.*?)$', text)
